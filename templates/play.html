@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ lang }} | Mood Music Picker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@500;700&display=swap" rel="stylesheet">
+  <script>
+    // Set the theme before the page draws, so there is no flash
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
+  <style>
+    :root {
+      --accent: {{ m.color }};
+      --ink: #1d1a17;
+      --card: #fffdf9;
+      --arm: #c9c2b8;
+      --pivot: #e9e3da;
+      --bg: color-mix(in srgb, var(--accent) 24%, #f6f1ea);
+      --shadow: 0 30px 60px -20px rgba(29,26,23,.35);
+    }
+    :root[data-theme="dark"] {
+      --ink: #f3ede4;
+      --card: #1f1d1b;
+      --arm: #6b655d;
+      --pivot: #3a3632;
+      --bg: color-mix(in srgb, var(--accent) 14%, #121110);
+      --shadow: 0 30px 60px -20px rgba(0,0,0,.7);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 28px; padding: 24px 16px;
+      font-family: "Manrope", system-ui, sans-serif; color: var(--ink);
+      background: var(--bg); transition: background .3s, color .3s;
+    }
+
+    .theme {
+      position: fixed; top: 16px; right: 16px; padding: 9px 16px; border-radius: 999px;
+      border: 1px solid color-mix(in srgb, var(--ink) 22%, transparent);
+      background: var(--card); color: var(--ink);
+      font: 700 .8rem "Manrope", sans-serif; cursor: pointer;
+    }
+
+    .lang { font-family: "Instrument Serif", serif; font-style: italic; font-size: 3rem; line-height: 1; margin: 0; }
+
+    /* ---------- Turntable ---------- */
+    .deck {
+      position: relative; width: 290px; height: 290px; border-radius: 34px;
+      background: var(--card);
+      box-shadow: var(--shadow), 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+      transition: background .3s;
+    }
+    .record {
+      position: absolute; left: 18px; top: 40px; width: 210px; height: 210px; border-radius: 50%;
+      background: repeating-radial-gradient(circle, #0f0f10 0 1px, #1d1d1f 2px 3px);
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+      animation: spin 3.2s linear infinite; animation-play-state: paused;
+    }
+    .record.playing { animation-play-state: running; }
+    .record::before {
+      content: ""; position: absolute; inset: 0; border-radius: 50%;
+      background: conic-gradient(from 40deg, transparent 0 16%, rgba(255,255,255,.18) 22%, transparent 28% 66%, rgba(255,255,255,.12) 72%, transparent 78%);
+    }
+    .record::after {
+      content: ""; position: absolute; top: 50%; left: 50%; width: 38%; aspect-ratio: 1;
+      transform: translate(-50%, -50%); border-radius: 50%;
+      background: radial-gradient(circle, #121110 0 6px, var(--accent) 7px);
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .arm {
+      position: absolute; top: 24px; right: 24px; width: 6px; height: 170px;
+      background: var(--arm); border-radius: 6px; transform-origin: 50% 3px;
+      transform: rotate(-4deg); transition: transform .9s cubic-bezier(.5, 0, .2, 1);
+    }
+    .arm.on { transform: rotate(24deg); }
+    .arm::before {
+      content: ""; position: absolute; top: -9px; left: -9px; width: 24px; height: 24px; border-radius: 50%;
+      background: var(--pivot); box-shadow: 0 0 0 1px color-mix(in srgb, var(--ink) 15%, transparent), 0 3px 6px rgba(0,0,0,.25);
+    }
+    .arm::after {
+      content: ""; position: absolute; bottom: -10px; left: -4px; width: 14px; height: 22px; border-radius: 4px;
+      background: var(--ink);
+    }
+
+    /* ---------- Controls ---------- */
+    .controls { width: 290px; display: flex; flex-direction: column; gap: 10px; }
+    .bar { height: 4px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 16%, transparent); cursor: pointer; overflow: hidden; }
+    .bar > div { height: 100%; width: 0; background: var(--ink); }
+    .time { display: flex; justify-content: space-between; font-size: .75rem; font-weight: 500; opacity: .6; }
+
+    .play {
+      margin-top: 8px; width: 100%; padding: 16px; border: none; cursor: pointer; border-radius: 18px;
+      background: var(--ink); color: var(--card); font: 700 1rem "Manrope", sans-serif; letter-spacing: .4px;
+      transition: transform .15s;
+    }
+    .play:hover { transform: translateY(-2px); }
+    .play:active { transform: translateY(0); }
+
+    .back { color: var(--ink); font-weight: 500; font-size: .9rem; opacity: .65; text-decoration: none; }
+    .back:hover { opacity: 1; }
+  </style>
+</head>
+<body>
+  <button class="theme" id="themeBtn">Dark mode</button>
+
+  <h1 class="lang">{{ lang }}</h1>
+
+  <div class="deck">
+    <div class="record" id="record"></div>
+    <div class="arm" id="arm"></div>
+  </div>
+
+  <div class="controls">
+    <div class="bar" id="bar"><div id="fill"></div></div>
+    <div class="time"><span id="cur">0:00</span><span id="dur">0:00</span></div>
+    <button class="play" id="playBtn">Play</button>
+  </div>
+
+  <audio id="song" loop src="{{ url_for('static', filename='music/' + song) }}"></audio>
+
+  <a class="back" href="/?lang={{ lang }}">← Back</a>
+
+  <script>
+    // ----- Light / dark switch -----
+    const root = document.documentElement;
+    const themeBtn = document.getElementById("themeBtn");
+    function showThemeLabel() {
+      themeBtn.textContent = root.getAttribute("data-theme") === "dark" ? "Light mode" : "Dark mode";
+    }
+    themeBtn.addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      showThemeLabel();
+    });
+    showThemeLabel();
+
+    // ----- Player -----
+    const song = document.getElementById("song");
+    const btn = document.getElementById("playBtn");
+    const record = document.getElementById("record");
+    const arm = document.getElementById("arm");
+    const fill = document.getElementById("fill");
+    const bar = document.getElementById("bar");
+    const cur = document.getElementById("cur");
+    const dur = document.getElementById("dur");
+
+    const fmt = s => isNaN(s) ? "0:00" : Math.floor(s / 60) + ":" + String(Math.floor(s % 60)).padStart(2, "0");
+
+    btn.addEventListener("click", () => { song.paused ? song.play() : song.pause(); });
+
+    song.addEventListener("play",  () => { record.classList.add("playing");    arm.classList.add("on");    btn.textContent = "Pause"; });
+    song.addEventListener("pause", () => { record.classList.remove("playing"); arm.classList.remove("on"); btn.textContent = "Play"; });
+    song.addEventListener("loadedmetadata", () => { dur.textContent = fmt(song.duration); });
+    song.addEventListener("timeupdate", () => {
+      cur.textContent = fmt(song.currentTime);
+      fill.style.width = (song.currentTime / song.duration * 100 || 0) + "%";
+    });
+
+    bar.addEventListener("click", e => {
+      const r = bar.getBoundingClientRect();
+      song.currentTime = (e.clientX - r.left) / r.width * song.duration;
+    });
+
+    song.play().catch(() => {});
+  </script>
+</body>
+</html>

@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mood Music Picker</title>
+  <script>
+    // Same saved choice as the player page, set before the page draws
+    (function () {
+      var saved = localStorage.getItem("theme");
+      var dark = saved ? saved === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches;
+      document.documentElement.setAttribute("data-theme", dark ? "dark" : "light");
+    })();
+  </script>
+  <style>
+    :root { --ink: #1c1c1c; --paper: #f4e8cc; --dot: #d9c9a3; --chip: #fff; }
+    :root[data-theme="dark"] { --ink: #f4e8cc; --paper: #16130f; --dot: #2c261c; --chip: #24211d; }
+    body { margin: 0; min-height: 100vh; padding: 40px 20px 60px; text-align: center; color: var(--ink); overflow-x: hidden;
+      font-family: "Trebuchet MS", system-ui, sans-serif;
+      background-color: var(--paper); background-image: radial-gradient(var(--dot) 1.5px, transparent 1.5px); background-size: 22px 22px; }
+    h1 { font-family: "Arial Black", Impact, sans-serif; font-size: clamp(2.4rem, 9vw, 4.6rem); margin: 0; letter-spacing: -1px; text-transform: uppercase; }
+    .tag { display: inline-block; background: var(--ink); color: var(--paper); padding: 4px 16px; font-weight: 700; transform: rotate(-2deg); margin: 10px 0 34px; }
+    .step { font-weight: 800; font-size: 1.1rem; margin: 0 0 14px; text-transform: uppercase; letter-spacing: 1px; }
+    .langs { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 640px; margin: 0 auto 44px; }
+    a.lang { padding: 8px 20px; background: var(--chip); color: var(--ink); text-decoration: none; font-weight: 800; border: 3px solid var(--ink);
+      border-radius: 8px; box-shadow: 4px 4px 0 var(--ink); transition: transform .15s, box-shadow .15s; }
+    a.lang:nth-child(odd) { transform: rotate(-2deg); } a.lang:nth-child(even) { transform: rotate(2deg); }
+    a.lang:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--ink); }
+    a.lang.active { background: var(--ink); color: var(--paper); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 40px 46px; max-width: 760px; margin: 0 auto; padding: 0 20px; }
+    .card { position: relative; }
+    .disc { position: absolute; top: 7%; right: 4%; width: 86%; aspect-ratio: 1; border-radius: 50%; transition: transform .35s;
+      background: radial-gradient(circle, var(--c) 0 13%, #111 14% 17%, transparent 18%), repeating-radial-gradient(circle, #111 0 3px, #2a2a2a 3px 6px); }
+    .card:hover .disc { transform: translateX(30%) rotate(120deg); }
+    a.mood { position: relative; display: block; aspect-ratio: 1; padding-top: 20%; box-sizing: border-box; background: var(--c); color: #1c1c1c;
+      border: 3px solid var(--ink); box-shadow: 6px 6px 0 var(--ink); text-decoration: none; font-family: "Arial Black", Impact, sans-serif; font-size: 1.4rem; text-transform: uppercase; }
+    .emoji { display: block; font-size: 3.4rem; margin-bottom: 6px; }
+    .hint { font-weight: 700; }
+    .theme { position: fixed; top: 16px; right: 16px; z-index: 5; padding: 8px 16px; border: 3px solid var(--ink); border-radius: 8px;
+      background: var(--chip); color: var(--ink); font: 800 .85rem "Trebuchet MS", system-ui, sans-serif; cursor: pointer; box-shadow: 3px 3px 0 var(--ink); }
+    @media (prefers-reduced-motion: reduce) { .disc, a.lang { transition: none; } .card:hover .disc { transform: none; } }
+  </style>
+</head>
+<body>
+  <button class="theme" id="themeBtn">Dark mode</button>
+
+  <h1>Mood Music</h1>
+  <div class="tag">Pick a language. Pick a mood.</div>
+
+  <p class="step">1. Language</p>
+  <div class="langs">
+    {% for l in languages %}
+      <a class="lang {{ 'active' if l == lang }}" href="/?lang={{ l }}">{{ l }}</a>
+    {% endfor %}
+  </div>
+
+  {% if lang %}
+    <p class="step">2. Your mood</p>
+    <div class="grid">
+      {% for key, m in moods.items() %}
+        <div class="card" style="--c: {{ m.color }}">
+          <span class="disc"></span>
+          <a class="mood" href="/mood/{{ key }}?lang={{ lang }}"><span class="emoji">{{ m.emoji }}</span>{{ m.label }}</a>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="hint">👆 Choose a language first, then the mood sleeves will appear.</p>
+  {% endif %}
+
+  <script>
+    const root = document.documentElement;
+    const themeBtn = document.getElementById("themeBtn");
+    function showThemeLabel() {
+      themeBtn.textContent = root.getAttribute("data-theme") === "dark" ? "Light mode" : "Dark mode";
+    }
+    themeBtn.addEventListener("click", () => {
+      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      root.setAttribute("data-theme", next);
+      localStorage.setItem("theme", next);
+      showThemeLabel();
+    });
+    showThemeLabel();
+  </script>
+</body>
+</html>
